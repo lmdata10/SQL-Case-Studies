@@ -22,11 +22,11 @@ pregnancies, and live more in sync with their cycles. This case study focuses on
 | `sleep_day`      | Logs sleep duration and efficiency metrics                                           |
 | `weight_log`     | Records user weight and BMI over time                                                |
 
-You can find the datasets [here](/Dataset/).
+You can find the datasets [here](Dataset/).
 
 ---
 ## ERD
-![diagram](SQL-Case-Studies/Bellabeat-Fitness-Tracker/Bellabeat_ERD.png)
+![diagram](Bellabeat_ERD.png)
 
 ---
 ## 🔍 Case Study Objectives  
@@ -360,7 +360,7 @@ WHERE Total_Steps > 0
    cd Bellabeat-Fitness-Tracker
    ```  
 2. Import the datasets into your PostgreSQL database.  
-3. Execute the provided SQL queries in the [`Scripts`](Bellabeat-Fitness-Tracker/Scripts) folder.
+3. Execute the provided SQL queries in the [`Scripts`](Scripts/) folder.
 
 ## 🚀 Let's Connect and Share Ideas!
 
