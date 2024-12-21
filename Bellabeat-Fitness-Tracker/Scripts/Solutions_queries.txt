@@ -1,0 +1,161 @@
+1. Identify the day of the week when the customers are most active and least active. Active is determined based on the no of steps.
+WITH cte AS(
+	SELECT 
+		day_of_week
+		, SUM(total_steps) AS activity
+FROM daily_activity
+GROUP BY day_of_week
+)
+SELECT 
+	'most_active' AS customer_activity
+	, day_of_week 
+FROM cte 
+WHERE activity = (SELECT MAX(activity) FROM cte)
+UNION ALL
+SELECT 
+	'least_active' AS Customer_activity
+	, day_of_week 
+FROM cte 
+WHERE activity = (SELECT MIN(activity) FROM cte)
+
+
+-- OUTPUT in One Row
+WITH cte AS (
+    SELECT 
+        day_of_week 
+        , SUM(total_steps) AS activity
+    FROM daily_activity
+    GROUP BY day_of_week
+)
+SELECT 
+    (SELECT day_of_week FROM cte WHERE activity = (SELECT MAX(activity) FROM cte)) AS most_active_day
+    , (SELECT day_of_week FROM cte WHERE activity = (SELECT MIN(activity) FROM cte)) AS least_active_day;
+
+
+2. Identify the customer who has the most effective sleep. Effective sleep is determined based on is customer spent most of the time in bed sleeping.
+SELECT 
+    customer_Id
+	, SUM(total_time_in_bed) AS total_time_in_bed
+	, SUM(total_minutes_asleep) AS total_minutes_asleep
+    , (SUM(total_time_in_bed) - SUM(total_minutes_asleep)) AS total_minutes_awake_in_bed
+FROM sleep_day
+/*To avoid invalid or zero bed time entries we can filter further
+,but in our Data we do have sleep enteries for all customers
+-- WHERE total_time_in_bed > 0. */
+GROUP BY customer_Id
+ORDER BY total_minutes_awake_in_bed
+LIMIT 1;
+
+
+3. Identify customers with no sleep record.
+-- USING JOIN
+SELECT d.customer_id
+FROM daily_Activity d
+LEFT JOIN sleep_day s ON d.customer_id = s.customer_id
+-- WHERE s.customer_id IS NULL
+GROUP BY d.customer_id
+-- I prefer the COUNT using HAVING
+HAVING COUNT(s.customer_id) = 0
+
+-- Using SUBQUERY
+SELECT DISTINCT Customer_ID
+FROM daily_activity
+WHERE Customer_ID NOT IN (SELECT DISTINCT Customer_Id FROM sleep_day);
+
+-- For better efficiency using joins would be better
+
+4. Fetch all customers whose daily activity, sleep and weight logs are all present.
+SELECT DISTINCT d.customer_id
+FROM daily_Activity d
+JOIN sleep_day s ON s.customer_id = d.customer_id
+JOIN weight_log w ON w.customer_id = s.customer_id
+
+
+5. For each customer, display the total hours they slept for each day of the week. Your output should contains 8 columns, first column is the customer id and the next 7 columns are the day of the week (like Monday, Tuesday, etc..)
+SELECT customer_id
+-- Dividing by 60 to convert the sleep_time in Minutes to sleep_time in Hours
+	, ROUND(SUM(CASE WHEN day_of_week = 'Monday' THEN total_minutes_asleep:: DECIMAL END) / 60,1) AS Monday
+	, ROUND(SUM(CASE WHEN day_of_week = 'Tuesday' THEN total_minutes_asleep:: DECIMAL END) / 60,1) AS Tuesday
+	, ROUND(SUM(CASE WHEN day_of_week = 'Wednesday' THEN total_minutes_asleep:: DECIMAL END) / 60,1) AS Wednesday
+	, ROUND(SUM(CASE WHEN day_of_week = 'Thursday' THEN total_minutes_asleep:: DECIMAL END) / 60,1) AS Thursday
+	, ROUND(SUM(CASE WHEN day_of_week = 'Friday' THEN total_minutes_asleep:: DECIMAL END) / 60,1) AS Friday
+	, ROUND(SUM(CASE WHEN day_of_week = 'Saturday' THEN total_minutes_asleep:: DECIMAL END) / 60,1) AS Saturday
+	, ROUND(SUM(CASE WHEN day_of_week = 'Sunday' THEN total_minutes_asleep:: DECIMAL END) / 60,1) AS Sunday
+FROM sleep_day
+GROUP BY customer_id
+
+
+6. For each customer, display the following: customer_id, date when they had the highest_weight(also mention weight in kg)
+SELECT 
+	customer_id
+	, dates
+	, MAX(weight_kg) AS highest_weight
+	-- , MIN(weight_kg) AS lowest_weight
+FROM weight_log
+GROUP BY customer_id, dates
+
+
+7. Fetch the day when customers sleep the most.
+WITH cte AS (
+SELECT day_of_week
+	, SUM(total_minutes_asleep) AS total_minutes_slept
+FROM sleep_day
+GROUP BY day_of_week
+)
+SELECT day_of_week
+FROM cte
+WHERE total_minutes_slept = (SELECT MAX(total_minutes_slept) FROM cte);
+
+-- OR using ORDER BY and LIMIT 
+SELECT day_of_week
+	, SUM(total_minutes_asleep) AS total_minutes_slept
+FROM sleep_day
+GROUP BY day_of_week
+ORDER BY total_minutes_slept DESC
+LIMIT 1;
+
+-- in the CTE + SUBQUERY appraoch the SUBQUERY will run an extra scan.
+
+
+8. For each day of the week, determine the percentage of time customers spend lying on bed without sleeping.
+-- This approach will consider Overall percentage of total_awake_time for all records combined for each day
+SELECT 
+    day_of_week,
+    ROUND(
+        (SUM(Total_Time_In_Bed) - SUM(Total_Minutes_Asleep))::DECIMAL / SUM(Total_Time_In_Bed) * 100, 2
+    ) AS pct_awake_time_in_bed
+FROM sleep_day
+GROUP BY day_of_week;
+
+-- Second approach - Avg percentage of awake_time for each record / Average behaviour of individual records
+SELECT day_of_week
+	, ROUND(
+		AVG(
+			(Total_Time_In_Bed - Total_Minutes_Asleep):: DECIMAL / Total_Time_In_Bed
+			) * 100
+			,2) AS pct_awake_time_in_bed
+FROM sleep_day
+GROUP BY day_of_week
+
+
+9. Identify the most repeated day of week. Repeated day of week is when a day has been mentioned the most in entire database.
+SELECT day_of_week
+	, COUNT(1) as total_days
+FROM (
+	SELECT day_of_week FROM daily_activity
+	UNION ALL
+	SELECT day_of_week FROM sleep_day
+	UNION ALL
+	SELECT day_of_week FROM weight_log
+	) c
+GROUP BY day_of_week
+ORDER BY total_days DESC
+LIMIT 1;
+
+
+10. Based on the given data, identify the average kms a customer walks based on 6000 steps.
+SELECT 
+	ROUND(AVG((Total_Distance / Total_Steps) * 6000),2)||' Kms' AS Avg_Km_Walked_For_6000_Steps
+FROM daily_activity
+WHERE Total_Steps > 0
+
