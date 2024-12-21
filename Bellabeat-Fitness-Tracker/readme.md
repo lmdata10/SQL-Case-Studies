@@ -22,7 +22,7 @@ pregnancies, and live more in sync with their cycles. This case study focuses on
 | `sleep_day`      | Logs sleep duration and efficiency metrics                                           |
 | `weight_log`     | Records user weight and BMI over time                                                |
 
-You can find the datasets [here](SQL-Case-Studies/Bellabeat-Fitness-Tracker/Dataset/).
+You can find the datasets [here](/Dataset/).
 
 ---
 ## ERD
