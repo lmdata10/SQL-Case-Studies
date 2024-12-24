@@ -18,7 +18,7 @@ The following tables are created as part of this case study:
 - **`Transactions`**: Tracks all account transactions.  
 - **`Customer_Accounts`**: Links customers, accounts, and products.  
 
-You can find the schema definition in the [`insert script`](SQL-Basics-Exploring-Bannking-Dataset/insert_script.txt) file.
+You can find the schema definition in the [`insert script`](insert_script.txt) file.
 
 ---
 
